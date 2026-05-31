@@ -4,3 +4,5 @@ timm
 huggingface_hub
 Pillow
 numpy
+qiskit
+qiskit-aer
