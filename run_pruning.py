@@ -1,6 +1,4 @@
-"""Standalone script that mirrors quantum_pruning.ipynb cells 2-4."""
 
-# ── Cell 2: Load model ────────────────────────────────────────────────────────
 from huggingface_hub import hf_hub_download
 import torch, timm
 from PIL import Image
@@ -34,7 +32,7 @@ with torch.no_grad():
     pred = model(x)
 print("Baseline city:", class_names[pred.argmax().item()])
 
-# ── Cell 3: QuantumPruner class ───────────────────────────────────────────────
+
 import numpy as np
 import torch.nn as nn
 import copy
@@ -155,7 +153,7 @@ class QuantumPruner:
                            overall_sparsity=overall, layers=layer_stats)
 
 
-# ── Cell 4: Apply pruning & compare ──────────────────────────────────────────
+
 import time
 import torch.nn.functional as F
 
@@ -199,7 +197,6 @@ print(f"\n  Total parameters  : {total_all:,}")
 print(f"  Zeroed parameters : {pruned_all:,}  ({pruned_all/total_all:.1%} of all params)")
 print(f"  Linear sparsity   : {stats['overall_sparsity']:.1%}")
 
-# ── Quantum circuit introspection ─────────────────────────────────────────────
 example_weights = np.array([0.85, 0.12, 0.67, 0.34, 0.91, 0.05])
 w_norm = example_weights / example_weights.max()
 qc_demo = pruner.build_circuit(w_norm)
