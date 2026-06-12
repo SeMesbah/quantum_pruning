@@ -10,7 +10,7 @@ Applying pruning and compression techniques to a SwinV2 Vision Transformer fine-
 
 ### Supported Cities
 
-Calgary, Charlottetown, Edmonton, Halifax, Hamilton, Kitchener-Waterloo, Montreal, Ottawa-Gatineau, Quebec City, Saskatoon, St. John's, Toronto, Vancouver, Victoria, Winnipeg
+Calgary, Charlottetown, Edmonton, Halifax, Hamilton, Kitchener-Waterloo, Montreal, Ottawa-Gatineau, Quebec City, Saskatoon, St. John's, Toronto, Vancouver, Winnipeg, Victoria
 
 ## Quantum Pruning
 
