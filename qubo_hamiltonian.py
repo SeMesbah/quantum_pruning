@@ -4,22 +4,20 @@ qubo_hamiltonian.py
 Step 3 of the Quantum Pruning project.
 
 Purpose:
-Convert block-pruning sensitivity data into a QUBO / Ising Hamiltonian model.
+Read the existing cost_loss_table.csv from the project directory and convert it
+into a QUBO / Ising Hamiltonian model.
 
 This file does NOT run Qiskit yet.
 This file does NOT prune the neural network yet.
-This file only builds the mathematical optimization model that Qiskit will use later.
+It only builds the mathematical optimization model that Qiskit will use later.
 
-Input:
-cost_loss_table.csv
+Default command:
 
-Outputs:
-qubo_outputs/selected_candidates.csv
-qubo_outputs/qubo_matrix.csv
-qubo_outputs/qubo_terms.json
-qubo_outputs/hamiltonian_terms.json
-qubo_outputs/qubo_metadata.json
-qubo_outputs/qubo_energy_check.csv
+    python qubo_hamiltonian.py
+
+Optional command:
+
+    python qubo_hamiltonian.py --input cost_loss_table.csv --outdir qubo_outputs --max-candidates 10
 """
 
 from __future__ import annotations
@@ -34,8 +32,30 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 
 
+# ============================================================
+# Basic file helpers
+# ============================================================
+
+def normalize_column_name(name: str) -> str:
+    """
+    Normalize CSV column names so the script is tolerant of small differences.
+
+    Examples:
+        "L_i" -> "l_i"
+        "loss increase" -> "loss_increase"
+        "accuracy-drop" -> "accuracy_drop"
+    """
+    return (
+        name.strip()
+        .lower()
+        .replace(" ", "_")
+        .replace("-", "_")
+        .replace(".", "_")
+    )
+
+
 def safe_float(value: Any, default: float = 0.0) -> float:
-    """Convert CSV text value to float safely."""
+    """Convert a CSV value to float safely."""
     if value is None:
         return default
 
@@ -48,10 +68,16 @@ def safe_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
-def read_csv_rows(path: Path) -> List[Dict[str, str]]:
-    """Read CSV as a list of dictionaries."""
+def read_csv_rows(path: Path) -> List[Dict[str, Any]]:
+    """
+    Read CSV and normalize column names.
+    """
     if not path.exists():
-        raise FileNotFoundError(f"Input CSV not found: {path}")
+        raise FileNotFoundError(
+            f"\nInput CSV not found: {path}\n"
+            f"Make sure cost_loss_table.csv is in the same project directory "
+            f"as qubo_hamiltonian.py, or pass a path with --input.\n"
+        )
 
     with path.open("r", newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
@@ -59,10 +85,18 @@ def read_csv_rows(path: Path) -> List[Dict[str, str]]:
         if reader.fieldnames is None:
             raise ValueError(f"CSV file has no header: {path}")
 
-        rows: List[Dict[str, str]] = []
+        rows: List[Dict[str, Any]] = []
 
         for raw_row in reader:
-            row = {str(key).strip(): value for key, value in raw_row.items() if key is not None}
+            row: Dict[str, Any] = {}
+
+            for key, value in raw_row.items():
+                if key is None:
+                    continue
+
+                normalized_key = normalize_column_name(str(key))
+                row[normalized_key] = value
+
             rows.append(row)
 
     if not rows:
@@ -91,85 +125,161 @@ def write_json(path: Path, data: Any) -> None:
         json.dump(data, file, indent=2)
 
 
-def get_loss_penalty(row: Dict[str, str]) -> float:
+# ============================================================
+# Candidate extraction
+# ============================================================
+
+def first_existing_value(row: Dict[str, Any], possible_keys: List[str], default: Any = None) -> Any:
     """
-    Extract pruning loss penalty from one CSV row.
-
-    Preferred column order:
-    1. L_i
-    2. loss_increase_raw
-    3. accuracy_drop_raw
-    4. f1_drop_raw
+    Return the first existing value from a list of possible column names.
     """
+    for key in possible_keys:
+        if key in row:
+            return row[key]
+    return default
 
-    for column in ["L_i", "loss_increase_raw", "accuracy_drop_raw", "f1_drop_raw"]:
-        if column in row:
-            return max(safe_float(row.get(column), default=0.0), 0.0)
 
-    return 0.0
+def get_candidate_name(row: Dict[str, Any]) -> str:
+    """
+    Extract candidate/block/module name from the CSV row.
+    """
+    value = first_existing_value(
+        row,
+        ["candidate", "block", "module", "name", "layer"],
+        default="",
+    )
+
+    return str(value).strip()
+
+
+def get_params(row: Dict[str, Any]) -> float:
+    """
+    Extract parameter count from the CSV row.
+    """
+    value = first_existing_value(
+        row,
+        ["params", "parameters", "n_params", "num_params", "parameter_count"],
+        default=0.0,
+    )
+
+    return safe_float(value, default=0.0)
+
+
+def get_loss_penalty(row: Dict[str, Any]) -> float:
+    """
+    Extract L_i, the pruning loss penalty.
+
+    Preferred order:
+        1. L_i
+        2. loss_increase
+        3. loss_increase_raw
+        4. accuracy_drop
+        5. accuracy_drop_raw
+        6. f1_drop
+        7. f1_drop_raw
+
+    Meaning:
+        high L_i = dangerous block to prune
+        low L_i  = safer block to prune
+    """
+    value = first_existing_value(
+        row,
+        [
+            "l_i",
+            "loss_increase",
+            "loss_increase_raw",
+            "accuracy_drop",
+            "accuracy_drop_raw",
+            "f1_drop",
+            "f1_drop_raw",
+        ],
+        default=0.0,
+    )
+
+    return max(safe_float(value, default=0.0), 0.0)
+
+
+def get_compression_base(row: Dict[str, Any], params: float) -> Tuple[float, str]:
+    """
+    Extract C_i if it exists, otherwise use params.
+
+    In the Hamiltonian, C_i means compression benefit.
+
+    We later normalize this value over the selected candidates, so the target
+    compression remains easy to interpret.
+    """
+    if "c_i" in row:
+        c_value = safe_float(row.get("c_i"), default=0.0)
+
+        if c_value > 0:
+            return c_value, "C_i from CSV"
+
+    return params, "params"
 
 
 def prepare_candidates(
-    rows: List[Dict[str, str]],
+    rows: List[Dict[str, Any]],
     max_candidates: int,
     selection_method: str,
-) -> List[Dict[str, Any]]:
+) -> Tuple[List[Dict[str, Any]], str]:
     """
-    Prepare candidates for the QUBO model.
+    Prepare pruning candidates for the QUBO model.
 
-    Each candidate becomes one binary pruning decision:
+    Each selected candidate becomes one binary decision:
 
         x_i = 0 means keep block i
         x_i = 1 means prune block i
-
-    The loss penalty is normalized to [0, 1].
-    The compression value is params / total selected params.
-
-    This means target_compression = 0.30 means:
-    try to prune about 30% of the selected candidate parameter mass.
     """
 
     cleaned: List[Dict[str, Any]] = []
+    compression_sources_used: List[str] = []
 
     for row in rows:
-        candidate = str(row.get("candidate", "")).strip()
-        params = safe_float(row.get("params"), default=0.0)
+        candidate_name = get_candidate_name(row)
+        params = get_params(row)
 
-        if not candidate:
+        if not candidate_name:
             continue
 
         if params <= 0:
             continue
 
-        raw_loss = get_loss_penalty(row)
+        raw_loss_penalty = get_loss_penalty(row)
+        compression_base, compression_source = get_compression_base(row, params)
+        compression_sources_used.append(compression_source)
 
-        if "pruning_attractiveness" in row:
-            attractiveness = safe_float(row.get("pruning_attractiveness"), default=0.0)
-        else:
-            attractiveness = params / (raw_loss + 1e-9)
+        if compression_base <= 0:
+            continue
+
+        pruning_attractiveness = compression_base / (raw_loss_penalty + 1e-9)
 
         cleaned.append(
             {
-                "candidate": candidate,
+                "candidate": candidate_name,
                 "params": params,
-                "raw_loss_penalty": raw_loss,
-                "pruning_attractiveness": attractiveness,
-                "source_row": row,
+                "raw_loss_penalty": raw_loss_penalty,
+                "compression_base": compression_base,
+                "compression_source": compression_source,
+                "pruning_attractiveness": pruning_attractiveness,
             }
         )
 
     if not cleaned:
-        raise ValueError("No valid pruning candidates found in the CSV.")
+        raise ValueError(
+            "No valid pruning candidates found. "
+            "The CSV should contain at least candidate/module name and params."
+        )
 
-    losses = np.array([candidate["raw_loss_penalty"] for candidate in cleaned], dtype=float)
-    max_loss = float(np.max(losses)) if len(losses) else 0.0
+    # Normalize loss penalty to [0, 1]
+    max_loss = max(candidate["raw_loss_penalty"] for candidate in cleaned)
 
     for candidate in cleaned:
         if max_loss > 0:
-            candidate["loss_penalty"] = float(candidate["raw_loss_penalty"] / max_loss)
+            candidate["loss_penalty"] = candidate["raw_loss_penalty"] / max_loss
         else:
             candidate["loss_penalty"] = 0.0
 
+    # Select the subset for Qiskit-sized simulation
     if selection_method == "attractiveness":
         cleaned.sort(key=lambda candidate: candidate["pruning_attractiveness"], reverse=True)
     elif selection_method == "params":
@@ -177,21 +287,34 @@ def prepare_candidates(
     elif selection_method == "low_loss":
         cleaned.sort(key=lambda candidate: candidate["loss_penalty"])
     else:
-        raise ValueError("Unknown selection method.")
+        raise ValueError(f"Unknown selection method: {selection_method}")
 
     selected = cleaned[:max_candidates]
 
-    total_selected_params = sum(candidate["params"] for candidate in selected)
+    total_compression_base = sum(candidate["compression_base"] for candidate in selected)
 
-    if total_selected_params <= 0:
-        raise ValueError("Selected candidates have zero total parameters.")
+    if total_compression_base <= 0:
+        raise ValueError("Selected candidates have zero total compression value.")
 
+    # Normalize compression values so sum(C_i) = 1 over selected candidates.
+    # This makes target_compression = 0.30 mean about 30% of selected candidate mass.
     for index, candidate in enumerate(selected):
         candidate["qubit_index"] = index
-        candidate["compression_value"] = float(candidate["params"] / total_selected_params)
+        candidate["compression_value"] = candidate["compression_base"] / total_compression_base
 
-    return selected
+    if all(source == "C_i from CSV" for source in compression_sources_used):
+        compression_source_summary = "C_i from CSV"
+    elif all(source == "params" for source in compression_sources_used):
+        compression_source_summary = "params"
+    else:
+        compression_source_summary = "mixed: C_i where available, otherwise params"
 
+    return selected, compression_source_summary
+
+
+# ============================================================
+# QUBO construction
+# ============================================================
 
 def build_qubo(
     candidates: List[Dict[str, Any]],
@@ -208,20 +331,20 @@ def build_qubo(
         H(x) =
             alpha * sum(L_i * x_i)
             - beta * sum(C_i * x_i)
-            + lambda * (sum(C_i * x_i) - target_compression)^2
+            + lambda * (sum(C_i * x_i) - C_target)^2
 
     Meaning:
 
-        L_i = penalty for pruning an important block
-        C_i = compression benefit from pruning a block
+        L_i = loss penalty for pruning block i
+        C_i = compression benefit for pruning block i
 
-    QUBO convention:
+    QUBO form:
 
         H(x) = constant
                + sum_i Q[i, i] * x_i
                + sum_{i < j} Q[i, j] * x_i * x_j
 
-    The Q matrix is upper-triangular.
+    The Q matrix is stored as upper-triangular.
     """
 
     n = len(candidates)
@@ -244,7 +367,7 @@ def build_qubo(
     constant = lambda_constraint * (target_compression ** 2)
 
     qubo_terms = {
-        "constant": constant,
+        "constant": float(constant),
         "linear_terms": [float(Q[i, i]) for i in range(n)],
         "quadratic_terms": [
             {
@@ -267,9 +390,15 @@ def build_qubo(
 
 
 def qubo_energy(Q: np.ndarray, x: np.ndarray, constant: float = 0.0) -> float:
-    """Evaluate QUBO energy for one binary vector."""
+    """
+    Evaluate the QUBO energy for one binary vector.
+    """
     return float(constant + x @ Q @ x)
 
+
+# ============================================================
+# QUBO to Ising Hamiltonian mapping
+# ============================================================
 
 def qubo_to_ising_terms(Q: np.ndarray, qubo_constant: float) -> Dict[str, Any]:
     """
@@ -281,9 +410,9 @@ def qubo_to_ising_terms(Q: np.ndarray, qubo_constant: float) -> Dict[str, Any]:
 
     Ising form:
 
-        H = constant + sum_i h_i * Z_i + sum_{i<j} J_ij * Z_i Z_j
+        H = constant + sum_i h_i Z_i + sum_{i<j} J_ij Z_i Z_j
 
-    This is the form that the later Qiskit file can convert into Pauli operators.
+    These terms will be used in the next Qiskit step.
     """
 
     n = Q.shape[0]
@@ -293,12 +422,14 @@ def qubo_to_ising_terms(Q: np.ndarray, qubo_constant: float) -> Dict[str, Any]:
 
     constant = float(qubo_constant)
 
+    # Linear QUBO terms
     for i in range(n):
         a = float(Q[i, i])
 
         constant += a / 2.0
         h[i] += -a / 2.0
 
+    # Quadratic QUBO terms
     for i in range(n):
         for j in range(i + 1, n):
             b = float(Q[i, j])
@@ -336,6 +467,10 @@ def qubo_to_ising_terms(Q: np.ndarray, qubo_constant: float) -> Dict[str, Any]:
     }
 
 
+# ============================================================
+# Classical sanity check
+# ============================================================
+
 def brute_force_energy_check(
     Q: np.ndarray,
     constant: float,
@@ -343,15 +478,17 @@ def brute_force_energy_check(
     max_results: int = 20,
 ) -> List[Dict[str, Any]]:
     """
-    Small classical sanity check.
+    Classical sanity check.
 
     This is NOT the quantum simulation.
 
-    For 10 variables, there are:
+    For 10 variables:
 
         2^10 = 1024
 
-    possible pruning masks, so it is easy to check the lowest-energy masks.
+    possible masks, so brute-force checking is still easy.
+
+    Later, Qiskit QAOA should try to find the same or similar low-energy masks.
     """
 
     n = len(candidates)
@@ -366,12 +503,14 @@ def brute_force_energy_check(
 
         energy = qubo_energy(Q, x, constant)
 
-        compression = float(
-            sum(candidates[i]["compression_value"] * bits[i] for i in range(n))
+        compression = sum(
+            candidates[i]["compression_value"] * bits[i]
+            for i in range(n)
         )
 
-        loss_penalty = float(
-            sum(candidates[i]["loss_penalty"] * bits[i] for i in range(n))
+        loss_penalty = sum(
+            candidates[i]["loss_penalty"] * bits[i]
+            for i in range(n)
         )
 
         pruned_blocks = [
@@ -384,8 +523,8 @@ def brute_force_energy_check(
             {
                 "bitstring": "".join(str(bit) for bit in bits),
                 "energy": energy,
-                "compression": compression,
-                "loss_penalty": loss_penalty,
+                "compression": float(compression),
+                "loss_penalty": float(loss_penalty),
                 "num_pruned_blocks": int(sum(bits)),
                 "pruned_blocks": "; ".join(pruned_blocks),
             }
@@ -395,6 +534,10 @@ def brute_force_energy_check(
 
     return results[:max_results]
 
+
+# ============================================================
+# Export functions
+# ============================================================
 
 def export_selected_candidates(outdir: Path, candidates: List[Dict[str, Any]]) -> None:
     rows: List[Dict[str, Any]] = []
@@ -408,6 +551,8 @@ def export_selected_candidates(outdir: Path, candidates: List[Dict[str, Any]]) -
                 "loss_penalty": candidate["loss_penalty"],
                 "compression_value": candidate["compression_value"],
                 "raw_loss_penalty": candidate["raw_loss_penalty"],
+                "compression_base": candidate["compression_base"],
+                "compression_source": candidate["compression_source"],
                 "pruning_attractiveness": candidate["pruning_attractiveness"],
             }
         )
@@ -422,6 +567,8 @@ def export_selected_candidates(outdir: Path, candidates: List[Dict[str, Any]]) -
             "loss_penalty",
             "compression_value",
             "raw_loss_penalty",
+            "compression_base",
+            "compression_source",
             "pruning_attractiveness",
         ],
     )
@@ -459,9 +606,13 @@ def export_energy_check(outdir: Path, energy_rows: List[Dict[str, Any]]) -> None
     )
 
 
+# ============================================================
+# Main entry point
+# ============================================================
+
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Build QUBO/Hamiltonian files from pruning sensitivity CSV."
+        description="Build QUBO/Hamiltonian files from cost_loss_table.csv."
     )
 
     parser.add_argument(
@@ -518,14 +669,14 @@ def main() -> None:
         "--target-compression",
         type=float,
         default=0.30,
-        help="Target compression share among selected candidates. Example: 0.30 = 30%.",
+        help="Target compression share. Example: 0.30 = 30 percent.",
     )
 
     parser.add_argument(
         "--energy-check-results",
         type=int,
         default=20,
-        help="Number of lowest-energy bitstrings to export as a sanity check.",
+        help="Number of lowest-energy bitstrings to export as sanity check.",
     )
 
     args = parser.parse_args()
@@ -541,7 +692,7 @@ def main() -> None:
 
     rows = read_csv_rows(input_path)
 
-    candidates = prepare_candidates(
+    candidates, compression_source_summary = prepare_candidates(
         rows=rows,
         max_candidates=args.max_candidates,
         selection_method=args.selection_method,
@@ -567,9 +718,12 @@ def main() -> None:
     )
 
     metadata = {
+        "current_step": "Step 3: CSV -> QUBO -> Ising Hamiltonian",
         "input_csv": str(input_path),
+        "output_directory": str(outdir),
         "number_of_candidates": len(candidates),
         "selection_method": args.selection_method,
+        "compression_source": compression_source_summary,
         "alpha": args.alpha,
         "beta": args.beta,
         "lambda_constraint": args.lambda_constraint,
@@ -578,14 +732,16 @@ def main() -> None:
             "0": "keep the candidate block",
             "1": "prune the candidate block",
         },
+        "qubo_formula": (
+            "H(x) = alpha*sum(L_i*x_i) "
+            "- beta*sum(C_i*x_i) "
+            "+ lambda*(sum(C_i*x_i)-target_compression)^2"
+        ),
         "qubo_energy_convention": (
             "H(x) = constant + sum_i Q[i,i]*x_i + sum_{i<j} Q[i,j]*x_i*x_j"
         ),
-        "matrix_note": (
-            "qubo_matrix.csv is upper-triangular. "
-            "Lower-triangular values are zero by design."
-        ),
-        "next_step": "Use hamiltonian_terms.json in a Qiskit QAOA simulation file.",
+        "ising_mapping": "x_i = (1 - Z_i) / 2",
+        "next_step": "Step 4: use hamiltonian_terms.json in Qiskit QAOA simulation.",
     }
 
     export_selected_candidates(outdir, candidates)
@@ -609,6 +765,7 @@ def main() -> None:
     print(f"Input CSV              : {input_path}")
     print(f"Output directory       : {outdir}")
     print(f"Candidates / qubits    : {len(candidates)}")
+    print(f"Compression source     : {compression_source_summary}")
     print(f"Target compression     : {args.target_compression:.2%}")
     print(f"Alpha loss weight      : {args.alpha}")
     print(f"Beta compression weight: {args.beta}")
@@ -623,6 +780,9 @@ def main() -> None:
 
     if len(candidates) <= 20 and args.energy_check_results > 0:
         print(f"- {outdir / 'qubo_energy_check.csv'}")
+
+    print("\nCurrent stage:")
+    print("cost_loss_table.csv -> QUBO matrix -> Ising Hamiltonian")
 
     print("\nImportant:")
     print("This step built the mathematical model only. It did not run Qiskit yet.")
