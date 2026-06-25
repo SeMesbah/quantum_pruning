@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(py -3 -c ' *)",
+      "PowerShell(git show HEAD:quantum_pruning.ipynb > \"$env:TEMP\\\\committed.ipynb\"; py -3 -c \"a=open\\(r'$env:TEMP\\\\committed.ipynb','rb'\\).read\\(\\); b=open\\('quantum_pruning.ipynb','rb'\\).read\\(\\); print\\('Committed:',len\\(a\\),'bytes'\\); print\\('On disk:',len\\(b\\),'bytes'\\); print\\('Identical:',a==b\\)\")"
+    ]
+  }
+}

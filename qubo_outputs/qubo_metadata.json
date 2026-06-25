@@ -1,0 +1,16 @@
+{
+  "input_csv": "cost_loss_table.csv",
+  "number_of_candidates": 8,
+  "selection_method": "attractiveness",
+  "alpha": 1.0,
+  "beta": 1.0,
+  "lambda_constraint": 4.0,
+  "target_compression": 0.3,
+  "binary_variable_meaning": {
+    "0": "keep the candidate block",
+    "1": "prune the candidate block"
+  },
+  "qubo_energy_convention": "H(x) = constant + sum_i Q[i,i]*x_i + sum_{i<j} Q[i,j]*x_i*x_j",
+  "matrix_note": "qubo_matrix.csv is upper-triangular. Lower-triangular values are zero by design.",
+  "next_step": "Use hamiltonian_terms.json in a Qiskit QAOA simulation file."
+}
