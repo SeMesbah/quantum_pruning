@@ -1,0 +1,33 @@
+{
+  "best_bitstring": "11000000",
+  "best_bitstring_little_endian": "00000011",
+  "energy": -0.3265091202283995,
+  "probability": 0.001953125,
+  "pruned_blocks": [
+    "stages.3.blocks.2",
+    "stages.2.blocks.1"
+  ],
+  "num_pruned_blocks": 2,
+  "total_compression": 0.43871441482150925,
+  "total_loss_penalty": 0.035238539076014826,
+  "validation": {
+    "classical_optimum_bitstring": "11000000",
+    "classical_optimum_energy": -0.3265091202283995,
+    "energy_gap": 0.0,
+    "found_global_optimum": true
+  },
+  "optimizer": {
+    "method": "COBYLA",
+    "reps": 2,
+    "shots": 1024,
+    "seed": 42,
+    "maxiter": 200,
+    "optimal_point": [
+      6.7331900374848965,
+      2.470538756999849,
+      6.133066094351416,
+      1.779497472654159
+    ],
+    "optimal_value_no_constant": -0.4995158978474891
+  }
+}
