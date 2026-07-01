@@ -1,11 +1,11 @@
 {
   "input_csv": "cost_loss_table.csv",
-  "number_of_candidates": 8,
+  "number_of_candidates": 10,
   "selection_method": "attractiveness",
   "alpha": 1.0,
   "beta": 1.0,
   "lambda_constraint": 4.0,
-  "target_compression": 0.3,
+  "target_compression": 0.4,
   "binary_variable_meaning": {
     "0": "keep the candidate block",
     "1": "prune the candidate block"

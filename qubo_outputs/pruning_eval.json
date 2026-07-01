@@ -1,9 +1,11 @@
 {
   "pruned_blocks": [
+    "stages.2.blocks.2",
     "stages.3.blocks.2",
-    "stages.2.blocks.1"
+    "stages.2.blocks.0",
+    "stages.2.blocks.5"
   ],
-  "params_removed": 5965056,
+  "params_removed": 8368896,
   "max_samples": 400,
   "baseline": {
     "loss": 0.09282580509781838,
@@ -12,18 +14,18 @@
     "n_samples": 400
   },
   "pruned": {
-    "loss": 0.17914662696421146,
-    "accuracy": 0.965,
-    "macro_f1": 0.9630543114404851,
+    "loss": 0.2956984770298004,
+    "accuracy": 0.9225,
+    "macro_f1": 0.9097319821611071,
     "n_samples": 400
   },
   "actual": {
-    "loss_increase": 0.08632082186639309,
-    "accuracy_drop": 0.025000000000000022,
-    "f1_drop": 0.024871551403410352
+    "loss_increase": 0.20287267193198202,
+    "accuracy_drop": 0.0675,
+    "f1_drop": 0.07819388068278843
   },
   "predicted_from_step2": {
-    "loss_increase": 0.09602750152349472,
-    "accuracy_drop": 0.021666666666666723
+    "loss_increase": 0.13893274813890458,
+    "accuracy_drop": 0.026666666666666727
   }
 }
