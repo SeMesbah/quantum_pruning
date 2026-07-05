@@ -1,0 +1,64 @@
+{
+  "source_energy_csv": "C:\\_projects\\quantum_pruning\\qubo_outputs\\qaoa_ranked_masks.csv",
+  "top_k": 5,
+  "model": "convnext",
+  "split": "test",
+  "max_samples": 600,
+  "target_compression": 0.3,
+  "baseline": {
+    "loss": 0.08863729625940323,
+    "accuracy": 0.9916666666666667,
+    "macro_f1": 0.9910687234689917,
+    "n_samples": 600
+  },
+  "baseline_eval_seconds": 66.39543279999998,
+  "total_trainable_params": 27831663,
+  "recommendation": {
+    "best_actual_f1": {
+      "qubo_rank": 1,
+      "mask": "0100000000",
+      "pruned_blocks": "stages.3.blocks.2",
+      "actual_accuracy": 0.9716666666666667,
+      "actual_macro_f1": 0.9698697938135414,
+      "actual_validation_loss": 0.16404972811539967,
+      "accuracy_drop": 0.020000000000000018,
+      "f1_drop": 0.021198929655450227
+    },
+    "best_tradeoff": {
+      "qubo_rank": 1,
+      "mask": "0100000000",
+      "pruned_blocks": "stages.3.blocks.2",
+      "predicted_compression": 0.29768647403283094,
+      "actual_accuracy": 0.9716666666666667,
+      "actual_macro_f1": 0.9698697938135414,
+      "tradeoff_score": 0.9692914123217492
+    }
+  },
+  "top_pick": {
+    "qubo_rank": 1,
+    "mask": "0100000000",
+    "pruned_blocks": "stages.3.blocks.2",
+    "qubo_energy": -0.05240409004192746,
+    "predicted_compression": 0.29768647403283094,
+    "predicted_loss_penalty": 0.027673571472904075,
+    "pairwise_penalty": 0.0,
+    "num_pruned_blocks": 1,
+    "baseline_accuracy": 0.9916666666666667,
+    "baseline_macro_f1": 0.9910687234689917,
+    "baseline_validation_loss": 0.08863729625940323,
+    "actual_accuracy": 0.9716666666666667,
+    "actual_macro_f1": 0.9698697938135414,
+    "actual_validation_loss": 0.16404972811539967,
+    "accuracy_drop": 0.020000000000000018,
+    "f1_drop": 0.021198929655450227,
+    "loss_increase": 0.07541243185599644,
+    "pruned_parameter_count": 4763136,
+    "total_trainable_params": 27831663,
+    "actual_parameter_reduction": 0.17114090523444467,
+    "n_samples": 600,
+    "eval_seconds": 64.38566809999975,
+    "tradeoff_score": 0.9692914123217492,
+    "final_decision": "best_actual_f1_and_best_tradeoff"
+  },
+  "note": "Masks were evaluated separately from a fresh baseline model. Pruning is simulated by bypassing selected structured blocks. eval_seconds is real-model evaluation wall time, not mask-selection time."
+}

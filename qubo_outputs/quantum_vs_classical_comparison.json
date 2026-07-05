@@ -1,0 +1,44 @@
+{
+  "quantum_source": "qaoa_result.json + pruning_eval.json (main pipeline, qaoa_experiment.ipynb)",
+  "classical_source": "classical_pruning_result.json (classical_pruning.ipynb)",
+  "rows": [
+    {
+      "method": "Quantum (QAOA, qiskit_algorithms + Aer sampler)",
+      "mask": "1100000100",
+      "pruned_blocks": "stages.2.blocks.2; stages.3.blocks.2; stages.1.blocks.1",
+      "num_pruned_blocks": 3,
+      "predicted_compression": 0.3919314581933378,
+      "actual_parameter_reduction": 0.22532264780584618,
+      "actual_accuracy": 0.9516666666666667,
+      "actual_macro_f1": 0.9463077917532546,
+      "accuracy_drop": 0.040000000000000036,
+      "f1_drop": 0.04476093171573703,
+      "selection_seconds": 1.6595708000095328,
+      "eval_seconds": 86.06374219999998,
+      "total_seconds": 87.72331300000951,
+      "n_eval_samples": 600
+    },
+    {
+      "method": "Classical (greedy sensitivity ranking)",
+      "mask": "1110000000",
+      "pruned_blocks": "stages.2.blocks.2; stages.3.blocks.2; stages.2.blocks.0",
+      "num_pruned_blocks": 3,
+      "predicted_compression": 0.4479216665066718,
+      "actual_parameter_reduction": 0.2575115974923956,
+      "actual_accuracy": 0.945,
+      "actual_macro_f1": 0.9394025753898378,
+      "accuracy_drop": 0.046666666666666745,
+      "f1_drop": 0.05166614807915382,
+      "selection_seconds": 0.00034309999318793416,
+      "eval_seconds": 90.78516420000233,
+      "total_seconds": 90.78550729999552,
+      "n_eval_samples": 600
+    }
+  ],
+  "same_mask_chosen": false,
+  "qaoa_found_global_optimum": true,
+  "quantum_selection_seconds": 1.6595708000095328,
+  "classical_selection_seconds": 0.00034309999318793416,
+  "classical_speedup_factor_over_qaoa_selection": 4836.988729115181,
+  "caveat": "QAOA timing is from a classical qiskit-aer gate-circuit simulation (exponential cost in qubit count), not real quantum hardware. This comparison shows decision quality parity/difference and simulated-QAOA overhead, not real hardware scaling behavior. Quantum and classical evaluations may also use different test-subset sizes (see n_eval_samples per row)."
+}

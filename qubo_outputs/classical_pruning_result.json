@@ -1,0 +1,41 @@
+{
+  "method": "classical_greedy_sensitivity_ranking",
+  "model": "convnext",
+  "split": "test",
+  "max_samples": 600,
+  "target_compression": 0.4,
+  "target_tolerance": 0.06,
+  "baseline": {
+    "loss": 0.08863729625940323,
+    "accuracy": 0.9916666666666667,
+    "macro_f1": 0.9910687234689917,
+    "n_samples": 600
+  },
+  "baseline_eval_seconds": 98.38970840000547,
+  "total_trainable_params": 27831663,
+  "result": {
+    "method": "classical_greedy_sensitivity_ranking",
+    "mask": "1110000000",
+    "pruned_blocks": "stages.2.blocks.2; stages.3.blocks.2; stages.2.blocks.0",
+    "qubo_energy": -0.2323461227907373,
+    "predicted_compression": 0.4479216665066718,
+    "predicted_loss_penalty": 0.040967938725294396,
+    "num_pruned_blocks": 3,
+    "baseline_accuracy": 0.9916666666666667,
+    "baseline_macro_f1": 0.9910687234689917,
+    "baseline_validation_loss": 0.08863729625940323,
+    "actual_accuracy": 0.945,
+    "actual_macro_f1": 0.9394025753898378,
+    "actual_validation_loss": 0.24191885073979696,
+    "accuracy_drop": 0.046666666666666745,
+    "f1_drop": 0.05166614807915382,
+    "loss_increase": 0.15328155448039374,
+    "pruned_parameter_count": 7166976,
+    "total_trainable_params": 27831663,
+    "actual_parameter_reduction": 0.2575115974923956,
+    "n_samples": 600,
+    "selection_time_seconds": 0.00034309999318793416,
+    "eval_seconds": 90.78516420000233
+  },
+  "note": "Blocks were ranked by pruning_attractiveness (compression_value / loss_penalty) computed from the same selected_candidates.csv the QUBO/QAOA run used, and greedily accumulated until the same target_compression was reached. No Hamiltonian, optimizer, or sampling was involved -- selection_time_seconds is a sort plus a cumulative sum."
+}

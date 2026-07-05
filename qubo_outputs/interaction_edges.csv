@@ -1,0 +1,13 @@
+i,j,candidate_i,candidate_j,coefficient_base,rho_interaction,qubo_coefficient,reason
+0,2,stages.2.blocks.2,stages.2.blocks.0,0.07561691669266563,1.0,0.07561691669266563,topology: same model stage
+0,3,stages.2.blocks.2,stages.2.blocks.5,0.07566079067972539,1.0,0.07566079067972539,topology: same model stage
+0,4,stages.2.blocks.2,stages.2.blocks.3,0.07572443292473471,1.0,0.07572443292473471,topology: same model stage
+0,5,stages.2.blocks.2,stages.2.blocks.7,0.0758923646617984,1.0,0.0758923646617984,topology: same model stage
+1,6,stages.3.blocks.2,stages.3.blocks.0,0.8591391736935965,1.0,0.8591391736935965,topology: same model stage | budget: pair compression 0.5954 exceeds upper band 0.4600
+2,3,stages.2.blocks.0,stages.2.blocks.5,0.07582604284913154,1.0,0.07582604284913154,topology: same model stage
+2,4,stages.2.blocks.0,stages.2.blocks.3,0.07588968509414086,1.0,0.07588968509414086,topology: same model stage
+2,5,stages.2.blocks.0,stages.2.blocks.7,0.07605761683120454,1.0,0.07605761683120454,topology: same model stage
+3,4,stages.2.blocks.5,stages.2.blocks.3,0.07593355908120063,1.0,0.07593355908120063,topology: same model stage
+3,5,stages.2.blocks.5,stages.2.blocks.7,0.0761014908182643,1.0,0.0761014908182643,topology: same model stage
+4,5,stages.2.blocks.3,stages.2.blocks.7,0.07616513306327363,1.0,0.07616513306327363,topology: same model stage
+8,9,stages.0.blocks.2,stages.0.blocks.0,0.007458014387274205,1.0,0.007458014387274205,topology: same model stage

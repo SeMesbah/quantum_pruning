@@ -2,30 +2,35 @@
   "pruned_blocks": [
     "stages.2.blocks.2",
     "stages.3.blocks.2",
-    "stages.2.blocks.0",
-    "stages.2.blocks.5"
+    "stages.1.blocks.1"
   ],
-  "params_removed": 8368896,
-  "max_samples": 400,
+  "removal_method": "structural (blocks physically deleted)",
+  "params_baseline": 27831663,
+  "params_pruned": 21560559,
+  "params_removed": 6271104,
+  "param_reduction_fraction": 0.22532264780584618,
+  "estimated_params_removed_from_qubo": 6271104,
+  "max_samples": 600,
+  "eval_seconds": 77.30417650000891,
   "baseline": {
-    "loss": 0.09282580509781838,
-    "accuracy": 0.99,
-    "macro_f1": 0.9879258628438955,
-    "n_samples": 400
+    "loss": 0.08863729625940323,
+    "accuracy": 0.9916666666666667,
+    "macro_f1": 0.9910687234689917,
+    "n_samples": 600
   },
   "pruned": {
-    "loss": 0.2956984770298004,
-    "accuracy": 0.9225,
-    "macro_f1": 0.9097319821611071,
-    "n_samples": 400
+    "loss": 0.2386656978726387,
+    "accuracy": 0.9516666666666667,
+    "macro_f1": 0.9463077917532546,
+    "n_samples": 600
   },
   "actual": {
-    "loss_increase": 0.20287267193198202,
-    "accuracy_drop": 0.0675,
-    "f1_drop": 0.07819388068278843
+    "loss_increase": 0.15002840161323547,
+    "accuracy_drop": 0.040000000000000036,
+    "f1_drop": 0.04476093171573703
   },
   "predicted_from_step2": {
-    "loss_increase": 0.13893274813890458,
-    "accuracy_drop": 0.026666666666666727
+    "loss_increase": 0.11012248868743578,
+    "accuracy_drop": 0.025000000000000022
   }
 }

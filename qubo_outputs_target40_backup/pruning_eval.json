@@ -1,0 +1,31 @@
+{
+  "pruned_blocks": [
+    "stages.2.blocks.2",
+    "stages.3.blocks.2",
+    "stages.2.blocks.0",
+    "stages.2.blocks.5"
+  ],
+  "params_removed": 8368896,
+  "max_samples": 400,
+  "baseline": {
+    "loss": 0.09282580509781838,
+    "accuracy": 0.99,
+    "macro_f1": 0.9879258628438955,
+    "n_samples": 400
+  },
+  "pruned": {
+    "loss": 0.2956984770298004,
+    "accuracy": 0.9225,
+    "macro_f1": 0.9097319821611071,
+    "n_samples": 400
+  },
+  "actual": {
+    "loss_increase": 0.20287267193198202,
+    "accuracy_drop": 0.0675,
+    "f1_drop": 0.07819388068278843
+  },
+  "predicted_from_step2": {
+    "loss_increase": 0.13893274813890458,
+    "accuracy_drop": 0.026666666666666727
+  }
+}

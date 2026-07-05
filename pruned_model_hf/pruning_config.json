@@ -1,0 +1,63 @@
+{
+  "base_model": {
+    "arch": "convnext_tiny",
+    "num_classes": 15,
+    "source_repo": "canada-guesser/canadian_streetview_cities_models",
+    "source_file": "cnn_model/convnext_tiny_set_3_final.bin"
+  },
+  "pruned_blocks": [
+    "stages.2.blocks.2",
+    "stages.3.blocks.2",
+    "stages.1.blocks.1"
+  ],
+  "removal_method": "structural",
+  "qaoa": {
+    "best_bitstring": "1100000100",
+    "energy": -0.26490372822367836,
+    "found_global_optimum": true,
+    "num_pruned_blocks": 3,
+    "reps": 2,
+    "shots": 1024,
+    "seed": 42,
+    "maxiter": 200,
+    "solve_seconds": 3.0378927999990992
+  },
+  "target_compression": 0.4,
+  "params": {
+    "baseline": 27831663,
+    "pruned": 21560559,
+    "removed": 6271104,
+    "reduction_fraction": 0.22532264780584618
+  },
+  "metrics": {
+    "baseline": {
+      "loss": 0.08863729625940323,
+      "accuracy": 0.9916666666666667,
+      "macro_f1": 0.9910687234689917,
+      "n_samples": 600
+    },
+    "pruned": {
+      "loss": 0.2386656978726387,
+      "accuracy": 0.9516666666666667,
+      "macro_f1": 0.9463077917532546,
+      "n_samples": 600
+    }
+  },
+  "class_names": [
+    "Calgary",
+    "Charlottetown",
+    "Edmonton",
+    "Halifax",
+    "Hamilton",
+    "Kitchener-Waterloo",
+    "Montreal",
+    "Ottawa-Gatineau",
+    "Quebec City",
+    "Saskatoon",
+    "St Johns",
+    "Toronto",
+    "Vancouver",
+    "Victoria",
+    "Winnipeg"
+  ]
+}

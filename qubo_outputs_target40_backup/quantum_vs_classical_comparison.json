@@ -1,0 +1,39 @@
+{
+  "rows": [
+    {
+      "method": "Quantum (QAOA, simulated statevector)",
+      "mask": "1100000100",
+      "pruned_blocks": "stages.2.blocks.2; stages.3.blocks.2; stages.1.blocks.1",
+      "num_pruned_blocks": 3,
+      "predicted_compression": 0.3919314581933378,
+      "actual_parameter_reduction": 0.22532264780584618,
+      "actual_accuracy": 0.9516666666666667,
+      "actual_macro_f1": 0.9463077917532546,
+      "accuracy_drop": 0.040000000000000036,
+      "f1_drop": 0.04476093171573703,
+      "selection_seconds": 14.883138900000631,
+      "eval_seconds": 59.551414999999906,
+      "total_seconds": 74.43455390000054
+    },
+    {
+      "method": "Classical (greedy sensitivity ranking)",
+      "mask": "1110000000",
+      "pruned_blocks": "stages.2.blocks.2; stages.3.blocks.2; stages.2.blocks.0",
+      "num_pruned_blocks": 3,
+      "predicted_compression": 0.4479216665066718,
+      "actual_parameter_reduction": 0.2575115974923956,
+      "actual_accuracy": 0.945,
+      "actual_macro_f1": 0.9394025753898378,
+      "accuracy_drop": 0.046666666666666745,
+      "f1_drop": 0.05166614807915382,
+      "selection_seconds": 0.00016700000014679972,
+      "eval_seconds": 57.517457200001445,
+      "total_seconds": 57.51762420000159
+    }
+  ],
+  "same_mask_chosen": false,
+  "quantum_selection_seconds": 14.883138900000631,
+  "classical_selection_seconds": 0.00016700000014679972,
+  "classical_speedup_factor_over_qaoa_selection": 89120.59213723206,
+  "caveat": "QAOA timing is from a classical statevector simulation (O(2^n) cost), not real quantum hardware. This comparison shows decision quality parity/difference and simulated-QAOA overhead, not real hardware scaling behavior."
+}

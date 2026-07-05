@@ -2,7 +2,7 @@
 
 This project formulates block-level neural-network pruning as a small QUBO / Ising Hamiltonian problem and prepares the Hamiltonian for Qiskit QAOA experiments.
 
-The current model uses a SwinV2 vision transformer fine-tuned for Canadian street-view city classification. Each candidate block becomes one binary pruning decision:
+The current model uses a ConvNeXT-tiny vision transformer fine-tuned for Canadian street-view city classification. Each candidate block becomes one binary pruning decision:
 
 ```text
 x_i = 0  keep block i
@@ -96,22 +96,31 @@ The result is not exactly 30% because the available candidates are discrete. The
 ```text
 trained image-classification model
         ↓
-block sensitivity analysis
+block sensitivity analysis  (qnn_and_pruning.ipynb → cost_loss_table.csv)
         ↓
-cost_loss_table.csv
+corrected sparse QUBO model  (qubo_hamiltonian.py → qubo_outputs/)
         ↓
-corrected sparse QUBO model
+Ising Hamiltonian representation  (hamiltonian_terms.json)
         ↓
-Ising Hamiltonian representation
+standard Qiskit QAOA  (qaoa_experiment.ipynb → best bitstring)
         ↓
-Qiskit QAOA simulation
-        ↓
-best measured bitstring / pruning mask
-        ↓
-apply pruning mask to the model
+genuine structural block removal → smaller model
         ↓
 evaluate pruned model accuracy, loss and F1 score
+        ↓
+upload pruned model to Hugging Face
 ```
+
+### Two QAOA paths
+
+| Notebook | Role | QAOA engine |
+|---|---|---|
+| **`qaoa_experiment.ipynb`** | **Main pipeline** — QUBO → QAOA → structural prune → publish to HF | official `qiskit_algorithms.QAOA` (library-standard, hardware-ready) |
+| `qaoa_rank_masks.ipynb` + `top_k_mask_evaluation.ipynb` | Reference path — ranks/evaluates masks | hand-rolled exact statevector |
+| `classical_pruning.ipynb` + `quantum_vs_classical_comparison.ipynb` | Classical greedy baseline + head-to-head comparison | — |
+
+Both QAOA notebooks read the **same** Step-3 QUBO outputs (`hamiltonian_terms.json`,
+`selected_candidates.csv`, `qubo_energy_check.csv`).
 
 ---
 

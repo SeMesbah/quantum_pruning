@@ -1,0 +1,10 @@
+{
+  "formulation": "sparse_topology",
+  "number_of_qubits": 10,
+  "z_terms": 10,
+  "zz_terms": 12,
+  "legacy_all_to_all_zz_terms_for_same_n": 45,
+  "zz_reduction_vs_legacy_all_to_all": 0.7333333333333334,
+  "interaction_edges": 12,
+  "why_this_matters": "Each ZZ term becomes a two-qubit cost interaction in QAOA. The corrected sparse formulation avoids the complete graph produced by the old squared global target constraint."
+}
