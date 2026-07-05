@@ -1,21 +1,19 @@
 {
-  "best_bitstring": "1100000100",
-  "best_bitstring_little_endian": "0010000011",
-  "energy": -0.26490372822367836,
-  "probability": 0.001953125,
+  "best_bitstring": "0100000000",
+  "best_bitstring_little_endian": "0000000010",
+  "energy": -0.28564144244665124,
+  "probability": 0.0126953125,
   "pruned_blocks": [
-    "stages.2.blocks.2",
-    "stages.3.blocks.2",
-    "stages.1.blocks.1"
+    "stages.3.blocks.2"
   ],
-  "num_pruned_blocks": 3,
-  "total_compression": 0.3919314581933378,
-  "total_loss_penalty": 0.04041087770893179,
-  "qaoa_solve_seconds": 3.0378927999990992,
+  "num_pruned_blocks": 1,
+  "total_compression": 0.29768647403283094,
+  "total_loss_penalty": 0.027673571472904075,
+  "qaoa_solve_seconds": 3.841511900012847,
   "validation": {
-    "classical_optimum_bitstring": "1100000100",
-    "classical_optimum_energy": -0.26490372822367836,
-    "energy_gap": 0.0,
+    "classical_optimum_bitstring": "0100000000",
+    "classical_optimum_energy": -0.2856414424466505,
+    "energy_gap": -7.216449660063518e-16,
     "found_global_optimum": true
   },
   "optimizer": {
@@ -25,11 +23,11 @@
     "seed": 42,
     "maxiter": 200,
     "optimal_point": [
-      5.414733580482204,
-      3.7432153317221144,
-      3.601927178905902,
-      1.7555345598656973
+      5.457741136402026,
+      2.709545930928872,
+      5.8036687369162046,
+      2.1359788536551987
     ],
-    "optimal_value_no_constant": -0.595273201788785
+    "optimal_value_no_constant": -0.8646172260674027
   }
 }

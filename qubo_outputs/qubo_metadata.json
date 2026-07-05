@@ -1,24 +1,24 @@
 {
   "current_step": "Step 3 corrected: CSV -> sparse QUBO -> Ising Hamiltonian",
-  "input_csv": "c:\\_projects\\quantum_pruning\\cost_loss_table.csv",
-  "output_directory": "c:\\_projects\\quantum_pruning\\qubo_outputs",
+  "input_csv": "cost_loss_table.csv",
+  "output_directory": "qubo_outputs",
   "number_of_candidates": 10,
   "selection_method": "attractiveness",
   "compression_source": "C_i_raw from CSV",
   "formulation": "sparse_topology",
   "alpha": 1.0,
-  "beta": 0.779,
+  "beta": 1.0525,
   "beta_auto_calibrated": true,
   "beta_calibration": {
-    "beta": 0.779,
-    "selected_bitstring_during_calibration": "1100000100",
-    "selected_compression_during_calibration": 0.3919314581933378,
-    "selected_loss_penalty_during_calibration": 0.04041087770893179,
+    "beta": 1.0525,
+    "selected_bitstring_during_calibration": "0100000000",
+    "selected_compression_during_calibration": 0.29768647403283094,
+    "selected_loss_penalty_during_calibration": 0.027673571472904075,
     "target_compression": 0.4,
-    "target_distance": 0.008068541806662222,
+    "target_distance": 0.10231352596716908,
     "beta_interval_for_selected_bitstring": [
-      0.434,
-      1.124
+      0.105,
+      2.0
     ],
     "beta_grid_min": 0.0,
     "beta_grid_max": 2.0,
@@ -26,11 +26,11 @@
     "explanation": "Beta was calibrated so the sparse QUBO ground state lands close to the requested target compression without adding an all-to-all squared target penalty."
   },
   "rho_interaction": 1.0,
-  "interaction_method": "same_stage",
+  "interaction_method": "all_pairs",
   "target_tolerance": 0.06,
   "budget_guard_weight": 4.0,
   "upper_compression_band": 0.46,
-  "interaction_edges": 12,
+  "interaction_edges": 45,
   "lambda_constraint": null,
   "target_compression": 0.4,
   "binary_variable_meaning": {

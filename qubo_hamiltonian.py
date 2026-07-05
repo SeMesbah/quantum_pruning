@@ -380,6 +380,7 @@ def build_interaction_edges(
         none        -> no topology pairwise terms
         adjacent    -> same stage and neighbouring block index
         same_stage  -> same stage, any two selected blocks in that stage
+        all_pairs   -> every candidate pair (dense all-to-all interaction graph)
     """
     edges_by_pair: Dict[Tuple[int, int], Dict[str, Any]] = {}
     upper_compression = target_compression + target_tolerance
@@ -421,7 +422,12 @@ def build_interaction_edges(
             topology_include = False
             topology_reason = ""
 
-            if method != "none":
+            if method == "all_pairs":
+                # Dense all-to-all: every candidate pair gets an interaction edge,
+                # regardless of stage. Produces n(n-1)/2 edges (45 for 10 qubits).
+                topology_include = True
+                topology_reason = "topology: all-to-all (every candidate pair)"
+            elif method != "none":
                 if stage_i is not None and stage_j is not None:
                     same_stage = stage_i == stage_j
                     adjacent = (
@@ -437,7 +443,7 @@ def build_interaction_edges(
                     elif method == "same_stage" and same_stage:
                         topology_include = True
                         topology_reason = "topology: same model stage"
-                    elif method not in {"none", "adjacent", "same_stage"}:
+                    elif method not in {"none", "adjacent", "same_stage", "all_pairs"}:
                         raise ValueError(f"Unknown interaction method: {method}")
 
             if topology_include:
@@ -1005,8 +1011,8 @@ def main() -> None:
         "--interaction-method",
         type=str,
         default="same_stage",
-        choices=["none", "adjacent", "same_stage"],
-        help="How to build sparse pairwise interaction edges.",
+        choices=["none", "adjacent", "same_stage", "all_pairs"],
+        help="How to build pairwise interaction edges. 'all_pairs' = dense all-to-all (45 edges for 10 qubits).",
     )
     parser.add_argument("--lambda-constraint", type=float, default=4.0, help="Legacy target-square constraint weight.")
     parser.add_argument("--target-compression", type=float, default=0.30, help="Requested compression share, e.g. 0.30 = 30 percent.")

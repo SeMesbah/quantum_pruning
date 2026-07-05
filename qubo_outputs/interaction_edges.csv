@@ -1,13 +1,46 @@
 i,j,candidate_i,candidate_j,coefficient_base,rho_interaction,qubo_coefficient,reason
-0,2,stages.2.blocks.2,stages.2.blocks.0,0.07561691669266563,1.0,0.07561691669266563,topology: same model stage
-0,3,stages.2.blocks.2,stages.2.blocks.5,0.07566079067972539,1.0,0.07566079067972539,topology: same model stage
-0,4,stages.2.blocks.2,stages.2.blocks.3,0.07572443292473471,1.0,0.07572443292473471,topology: same model stage
-0,5,stages.2.blocks.2,stages.2.blocks.7,0.0758923646617984,1.0,0.0758923646617984,topology: same model stage
-1,6,stages.3.blocks.2,stages.3.blocks.0,0.8591391736935965,1.0,0.8591391736935965,topology: same model stage | budget: pair compression 0.5954 exceeds upper band 0.4600
-2,3,stages.2.blocks.0,stages.2.blocks.5,0.07582604284913154,1.0,0.07582604284913154,topology: same model stage
-2,4,stages.2.blocks.0,stages.2.blocks.3,0.07588968509414086,1.0,0.07588968509414086,topology: same model stage
-2,5,stages.2.blocks.0,stages.2.blocks.7,0.07605761683120454,1.0,0.07605761683120454,topology: same model stage
-3,4,stages.2.blocks.5,stages.2.blocks.3,0.07593355908120063,1.0,0.07593355908120063,topology: same model stage
-3,5,stages.2.blocks.5,stages.2.blocks.7,0.0761014908182643,1.0,0.0761014908182643,topology: same model stage
-4,5,stages.2.blocks.3,stages.2.blocks.7,0.07616513306327363,1.0,0.07616513306327363,topology: same model stage
-8,9,stages.0.blocks.2,stages.0.blocks.0,0.007458014387274205,1.0,0.007458014387274205,topology: same model stage
+0,1,stages.2.blocks.2,stages.3.blocks.2,0.15193923189227612,1.0,0.15193923189227612,topology: all-to-all (every candidate pair)
+0,2,stages.2.blocks.2,stages.2.blocks.0,0.07561691669266563,1.0,0.07561691669266563,topology: all-to-all (every candidate pair)
+0,3,stages.2.blocks.2,stages.2.blocks.5,0.07566079067972539,1.0,0.07566079067972539,topology: all-to-all (every candidate pair)
+0,4,stages.2.blocks.2,stages.2.blocks.3,0.07572443292473471,1.0,0.07572443292473471,topology: all-to-all (every candidate pair)
+0,5,stages.2.blocks.2,stages.2.blocks.7,0.0758923646617984,1.0,0.0758923646617984,topology: all-to-all (every candidate pair)
+0,6,stages.2.blocks.2,stages.3.blocks.0,0.1578280053775952,1.0,0.1578280053775952,topology: all-to-all (every candidate pair)
+0,7,stages.2.blocks.2,stages.1.blocks.1,0.03814659466365788,1.0,0.03814659466365788,topology: all-to-all (every candidate pair)
+0,8,stages.2.blocks.2,stages.0.blocks.2,0.019431646497758893,1.0,0.019431646497758893,topology: all-to-all (every candidate pair)
+0,9,stages.2.blocks.2,stages.0.blocks.0,0.028984387815158046,1.0,0.028984387815158046,topology: all-to-all (every candidate pair)
+1,2,stages.3.blocks.2,stages.2.blocks.0,0.15226820157772053,1.0,0.15226820157772053,topology: all-to-all (every candidate pair)
+1,3,stages.3.blocks.2,stages.2.blocks.5,0.15235554210567917,1.0,0.15235554210567917,topology: all-to-all (every candidate pair)
+1,4,stages.3.blocks.2,stages.2.blocks.3,0.15248223556693258,1.0,0.15248223556693258,topology: all-to-all (every candidate pair)
+1,5,stages.3.blocks.2,stages.2.blocks.7,0.15281653950325305,1.0,0.15281653950325305,topology: all-to-all (every candidate pair)
+1,6,stages.3.blocks.2,stages.3.blocks.0,0.8591391736935965,1.0,0.8591391736935965,topology: all-to-all (every candidate pair) | budget: pair compression 0.5954 exceeds upper band 0.4600
+1,7,stages.3.blocks.2,stages.1.blocks.1,0.07681524127697938,1.0,0.07681524127697938,topology: all-to-all (every candidate pair)
+1,8,stages.3.blocks.2,stages.0.blocks.2,0.039128891299064314,1.0,0.039128891299064314,topology: all-to-all (every candidate pair)
+1,9,stages.3.blocks.2,stages.0.blocks.0,0.05814566014155497,1.0,0.05814566014155497,topology: all-to-all (every candidate pair)
+2,3,stages.2.blocks.0,stages.2.blocks.5,0.07582604284913154,1.0,0.07582604284913154,topology: all-to-all (every candidate pair)
+2,4,stages.2.blocks.0,stages.2.blocks.3,0.07588968509414086,1.0,0.07588968509414086,topology: all-to-all (every candidate pair)
+2,5,stages.2.blocks.0,stages.2.blocks.7,0.07605761683120454,1.0,0.07605761683120454,topology: all-to-all (every candidate pair)
+2,6,stages.2.blocks.0,stages.3.blocks.0,0.1581569750630396,1.0,0.1581569750630396,topology: all-to-all (every candidate pair)
+2,7,stages.2.blocks.0,stages.1.blocks.1,0.038229982779582165,1.0,0.038229982779582165,topology: all-to-all (every candidate pair)
+2,8,stages.2.blocks.0,stages.0.blocks.2,0.01947409232760556,1.0,0.01947409232760556,topology: all-to-all (every candidate pair)
+2,9,stages.2.blocks.0,stages.0.blocks.0,0.029026833645004708,1.0,0.029026833645004708,topology: all-to-all (every candidate pair)
+3,4,stages.2.blocks.5,stages.2.blocks.3,0.07593355908120063,1.0,0.07593355908120063,topology: all-to-all (every candidate pair)
+3,5,stages.2.blocks.5,stages.2.blocks.7,0.0761014908182643,1.0,0.0761014908182643,topology: all-to-all (every candidate pair)
+3,6,stages.2.blocks.5,stages.3.blocks.0,0.15824431559099825,1.0,0.15824431559099825,topology: all-to-all (every candidate pair)
+3,7,stages.2.blocks.5,stages.1.blocks.1,0.038252122090262006,1.0,0.038252122090262006,topology: all-to-all (every candidate pair)
+3,8,stages.2.blocks.5,stages.0.blocks.2,0.019485361576270347,1.0,0.019485361576270347,topology: all-to-all (every candidate pair)
+3,9,stages.2.blocks.5,stages.0.blocks.0,0.0290381028936695,1.0,0.0290381028936695,topology: all-to-all (every candidate pair)
+4,5,stages.2.blocks.3,stages.2.blocks.7,0.07616513306327363,1.0,0.07616513306327363,topology: all-to-all (every candidate pair)
+4,6,stages.2.blocks.3,stages.3.blocks.0,0.15837100905225165,1.0,0.15837100905225165,topology: all-to-all (every candidate pair)
+4,7,stages.2.blocks.3,stages.1.blocks.1,0.03828423668775014,1.0,0.03828423668775014,topology: all-to-all (every candidate pair)
+4,8,stages.2.blocks.3,stages.0.blocks.2,0.019501708398901686,1.0,0.019501708398901686,topology: all-to-all (every candidate pair)
+4,9,stages.2.blocks.3,stages.0.blocks.0,0.02905444971630083,1.0,0.02905444971630083,topology: all-to-all (every candidate pair)
+5,6,stages.2.blocks.7,stages.3.blocks.0,0.15870531298857213,1.0,0.15870531298857213,topology: all-to-all (every candidate pair)
+5,7,stages.2.blocks.7,stages.1.blocks.1,0.03836897694385665,1.0,0.03836897694385665,topology: all-to-all (every candidate pair)
+5,8,stages.2.blocks.7,stages.0.blocks.2,0.01954484248883754,1.0,0.01954484248883754,topology: all-to-all (every candidate pair)
+5,9,stages.2.blocks.7,stages.0.blocks.0,0.02909758380623669,1.0,0.02909758380623669,topology: all-to-all (every candidate pair)
+6,7,stages.3.blocks.0,stages.1.blocks.1,0.07978678305951889,1.0,0.07978678305951889,topology: all-to-all (every candidate pair)
+6,8,stages.3.blocks.0,stages.0.blocks.2,0.04064145163797941,1.0,0.04064145163797941,topology: all-to-all (every candidate pair)
+6,9,stages.3.blocks.0,stages.0.blocks.0,0.059658220480470064,1.0,0.059658220480470064,topology: all-to-all (every candidate pair)
+7,8,stages.1.blocks.1,stages.0.blocks.2,0.009824135694163067,1.0,0.009824135694163067,topology: all-to-all (every candidate pair)
+7,9,stages.1.blocks.1,stages.0.blocks.0,0.014644557133909615,1.0,0.014644557133909615,topology: all-to-all (every candidate pair)
+8,9,stages.0.blocks.2,stages.0.blocks.0,0.007458014387274205,1.0,0.007458014387274205,topology: all-to-all (every candidate pair)
