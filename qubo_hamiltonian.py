@@ -27,6 +27,24 @@ exceed the allowed target band. The target compression is used to tune beta and
 to build a sparse budget guard, instead of being encoded as a global squared
 all-to-all penalty. This keeps the Hamiltonian much sparser.
 
+Real measured interaction data (optional, on by default):
+    w_ij above can be a pure formula guess (sqrt(C_i*C_j)*(1+0.5*(L_i+L_j))), or
+    it can be BLENDED with real measured pairwise interaction data from
+    pairwise_sensitivity.ipynb (which actually bypasses two blocks at once and
+    measures the true joint damage) via --measured-pairwise-csv. Default
+    interaction-method is now all_pairs (every candidate pair gets an edge,
+    45 for 10 candidates), so this blended data covers the whole interaction
+    graph, not just a hand-picked subset.
+
+Loss metric (--loss-metric, default "accuracy"):
+    L_i, and the measured half of any blended w_ij, can be built from
+    validation-loss increase ("loss"), real accuracy drop ("accuracy"), or
+    real macro-F1 drop ("f1"). L_i and the measured interaction MUST use the
+    same basis to stay unit-consistent -- this is handled automatically.
+    Empirically (see qubo_outputs/pairwise_sensitivity_summary.json and
+    pruning_eval.json across runs), "accuracy" produces the best real-model
+    result once blended with measured data, and is now the default.
+
 Binary meaning:
     x_i = 0  keep candidate block i
     x_i = 1  prune candidate block i
@@ -43,8 +61,11 @@ Recommended explicit command:
         --outdir qubo_outputs \
         --max-candidates 10 \
         --formulation sparse_topology \
-        --interaction-method same_stage \
-        --target-compression 0.30
+        --interaction-method all_pairs \
+        --loss-metric accuracy \
+        --measured-pairwise-csv qubo_outputs/pairwise_sensitivity.csv \
+        --rho-interaction 0.90 \
+        --target-compression 0.40
 """
 
 from __future__ import annotations
@@ -191,34 +212,45 @@ def get_params(row: Dict[str, Any]) -> float:
     return safe_float(value, default=0.0)
 
 
-def get_loss_penalty(row: Dict[str, Any]) -> float:
-    """
-    Extract L_i, the pruning loss penalty.
+LOSS_METRIC_COLUMN_PRIORITY: Dict[str, List[str]] = {
+    "loss": ["l_i", "loss_penalty", "loss_increase", "loss_increase_raw"],
+    "accuracy": ["accuracy_drop", "accuracy_drop_raw"],
+    "f1": ["f1_drop", "f1_drop_raw"],
+}
 
-    Preferred order:
-        1. L_i / normalized loss penalty
-        2. loss_increase / loss_increase_raw
-        3. accuracy_drop / accuracy_drop_raw
-        4. f1_drop / f1_drop_raw
+# Column in pairwise_sensitivity.csv holding the real measured interaction gap
+# for each loss_metric, so the blended q_ij stays on the same basis as L_i.
+LOSS_METRIC_INTERACTION_COLUMN: Dict[str, str] = {
+    "loss": "interaction_loss_gap",
+    "accuracy": "interaction_accuracy_gap",
+    "f1": "interaction_f1_gap",
+}
 
-    Meaning:
-        high L_i = dangerous block to prune
-        low L_i  = safer block to prune
+
+def get_loss_penalty(row: Dict[str, Any], loss_metric: str = "loss") -> float:
     """
-    value = first_existing_value(
-        row,
-        [
-            "l_i",
-            "loss_penalty",
-            "loss_increase",
-            "loss_increase_raw",
-            "accuracy_drop",
-            "accuracy_drop_raw",
-            "f1_drop",
-            "f1_drop_raw",
-        ],
-        default=0.0,
-    )
+    Extract L_i, the pruning loss penalty, on the requested basis.
+
+    loss_metric selects which measured quantity L_i represents:
+        "loss"     -> validation-loss increase (default; preferred order:
+                      L_i / loss_increase / loss_increase_raw)
+        "accuracy" -> real accuracy drop (accuracy_drop / accuracy_drop_raw)
+        "f1"       -> real macro-F1 drop (f1_drop / f1_drop_raw)
+
+    Whichever basis is NOT selected is still used as a fallback if the
+    preferred columns are missing, so this stays robust against partial CSVs.
+
+    Meaning: high L_i = dangerous block to prune, low L_i = safer block to prune.
+    """
+    priority = LOSS_METRIC_COLUMN_PRIORITY.get(loss_metric, LOSS_METRIC_COLUMN_PRIORITY["loss"])
+    fallback = [
+        col
+        for metric, cols in LOSS_METRIC_COLUMN_PRIORITY.items()
+        if metric != loss_metric
+        for col in cols
+    ]
+
+    value = first_existing_value(row, priority + fallback, default=0.0)
     return max(safe_float(value, default=0.0), 0.0)
 
 
@@ -265,6 +297,7 @@ def prepare_candidates(
     rows: List[Dict[str, Any]],
     max_candidates: int,
     selection_method: str,
+    loss_metric: str = "loss",
 ) -> Tuple[List[Dict[str, Any]], str]:
     """
     Prepare pruning candidates for the QUBO model.
@@ -272,6 +305,12 @@ def prepare_candidates(
     Each selected candidate becomes one binary decision:
         x_i = 0 means keep block i
         x_i = 1 means prune block i
+
+    loss_metric controls what L_i represents (see get_loss_penalty): "loss"
+    (validation-loss increase, default), "accuracy" (real accuracy drop), or
+    "f1" (real macro-F1 drop). Keeping this consistent with whichever measured
+    interaction column build_interaction_edges blends in is what keeps the
+    QUBO's linear and quadratic terms on the same units.
     """
     cleaned: List[Dict[str, Any]] = []
     compression_sources_used: List[str] = []
@@ -283,7 +322,7 @@ def prepare_candidates(
         if not candidate_name or params <= 0:
             continue
 
-        raw_loss_penalty = get_loss_penalty(row)
+        raw_loss_penalty = get_loss_penalty(row, loss_metric=loss_metric)
         compression_base, compression_source = get_compression_base(row, params)
         compression_sources_used.append(compression_source)
 
@@ -354,12 +393,42 @@ def prepare_candidates(
 # ============================================================
 
 
+def load_measured_pairwise_interactions(
+    path: Path, loss_metric: str = "loss"
+) -> Dict[frozenset, float]:
+    """
+    Load real measured pairwise interaction data from pairwise_sensitivity.csv
+    (produced by pairwise_sensitivity.ipynb, which actually bypasses two blocks
+    at once and measures the real joint damage on the trained model).
+
+    loss_metric selects which measured gap column to read (must match the
+    loss_metric used to build L_i, so the blended q_ij stays unit-consistent
+    with the linear alpha*L_i term): "loss" -> interaction_loss_gap (default),
+    "accuracy" -> interaction_accuracy_gap, "f1" -> interaction_f1_gap.
+
+    Returns: frozenset({candidate_i, candidate_j}) -> raw interaction gap
+    (measured joint damage minus the naive sum of the two singles' raw
+    damage, on the requested basis). This is a RAW value; the caller
+    normalizes it using the same divisor used to build L_i from its raw form.
+    """
+    column = LOSS_METRIC_INTERACTION_COLUMN.get(loss_metric, "interaction_loss_gap")
+    result: Dict[frozenset, float] = {}
+
+    with path.open("r", newline="", encoding="utf-8") as file:
+        for row in csv.DictReader(file):
+            key = frozenset({row["candidate_i"], row["candidate_j"]})
+            result[key] = safe_float(row.get(column), default=0.0)
+
+    return result
+
+
 def build_interaction_edges(
     candidates: List[Dict[str, Any]],
     method: str,
     target_compression: float,
     target_tolerance: float,
     budget_guard_weight: float,
+    measured_interactions: Optional[Dict[frozenset, float]] = None,
 ) -> List[Dict[str, Any]]:
     """
     Build a sparse set of pairwise interaction edges.
@@ -369,12 +438,21 @@ def build_interaction_edges(
 
     1. topology guard:
        pruning two blocks from the same local model region is often riskier
-       than the sum of pruning them independently.
+       than the sum of pruning them independently. When measured_interactions
+       is provided, this formula-based estimate is BLENDED (averaged) with the
+       real measured interaction for that pair, when available -- so the
+       weight is grounded in an actual bypass-both-blocks measurement, not
+       only a guess. Blended weights may be negative (a pair measured as
+       genuinely safer together than the sum of its parts predicts) -- these
+       are kept, not clipped, so the QUBO can reflect real synergy as well as
+       real risk.
 
     2. budget guard:
        if two candidates together exceed the allowed compression band, add a
        pairwise penalty. This discourages over-pruning without creating a
-       complete graph between every pair.
+       complete graph between every pair. This part is never blended with
+       measured data -- it is a size-budget rule, not an interaction-risk
+       estimate.
 
     Supported topology methods:
         none        -> no topology pairwise terms
@@ -385,8 +463,12 @@ def build_interaction_edges(
     edges_by_pair: Dict[Tuple[int, int], Dict[str, Any]] = {}
     upper_compression = target_compression + target_tolerance
 
+    # Same normalizer used to build L_i from L_i_raw (see prepare_candidates),
+    # so a blended measured weight lives on the same scale as alpha*L_i.
+    max_raw_loss = max((c["raw_loss_penalty"] for c in candidates), default=0.0)
+
     def add_edge(i: int, j: int, coefficient: float, reason: str) -> None:
-        if coefficient <= 0:
+        if coefficient == 0:
             return
         key = (i, j) if i < j else (j, i)
         if key not in edges_by_pair:
@@ -450,8 +532,18 @@ def build_interaction_edges(
                 # sqrt(C_i*C_j) is stronger and more stable than C_i*C_j for
                 # small normalized values. The small loss factor raises the
                 # penalty when both candidates are individually risky.
-                topology_weight = math.sqrt(c_i * c_j) * (1.0 + 0.5 * (l_i + l_j))
-                add_edge(i, j, topology_weight, topology_reason)
+                formula_weight = math.sqrt(c_i * c_j) * (1.0 + 0.5 * (l_i + l_j))
+                topology_weight = formula_weight
+                reason = topology_reason
+
+                if measured_interactions is not None and max_raw_loss > 0:
+                    pair_key = frozenset({ci["candidate"], cj["candidate"]})
+                    if pair_key in measured_interactions:
+                        measured_weight = measured_interactions[pair_key] / max_raw_loss
+                        topology_weight = (formula_weight + measured_weight) / 2.0
+                        reason = f"{topology_reason} | blended with measured pairwise data"
+
+                add_edge(i, j, topology_weight, reason)
 
             # -----------------------------
             # 2) sparse budget guard
@@ -1010,9 +1102,31 @@ def main() -> None:
     parser.add_argument(
         "--interaction-method",
         type=str,
-        default="same_stage",
+        default="all_pairs",
         choices=["none", "adjacent", "same_stage", "all_pairs"],
-        help="How to build pairwise interaction edges. 'all_pairs' = dense all-to-all (45 edges for 10 qubits).",
+        help="How to build pairwise interaction edges. Default 'all_pairs' = dense "
+             "all-to-all (45 edges for 10 qubits), matching the coverage of "
+             "pairwise_sensitivity.csv so every edge can be measurement-blended.",
+    )
+    parser.add_argument(
+        "--loss-metric",
+        type=str,
+        default="accuracy",
+        choices=["loss", "accuracy", "f1"],
+        help="What L_i (and, when blending, the measured q_ij) is measured in: "
+             "'accuracy' = real accuracy drop (default -- empirically the best-"
+             "performing basis with measured pairwise blending), 'loss' = "
+             "validation-loss increase, 'f1' = real macro-F1 drop. Keeping L_i and "
+             "the blended interaction term on the same basis is what keeps the "
+             "QUBO's units consistent.",
+    )
+    parser.add_argument(
+        "--measured-pairwise-csv",
+        type=str,
+        default="qubo_outputs/pairwise_sensitivity.csv",
+        help="Real measured pairwise interaction data (from pairwise_sensitivity.ipynb), "
+             "blended into each topology edge's weight when available. Pass an empty "
+             "string or a nonexistent path to disable and use the formula alone.",
     )
     parser.add_argument("--lambda-constraint", type=float, default=4.0, help="Legacy target-square constraint weight.")
     parser.add_argument("--target-compression", type=float, default=0.30, help="Requested compression share, e.g. 0.30 = 30 percent.")
@@ -1034,6 +1148,7 @@ def main() -> None:
         rows=rows,
         max_candidates=args.max_candidates,
         selection_method=args.selection_method,
+        loss_metric=args.loss_metric,
     )
 
     if len(candidates) < args.max_candidates:
@@ -1042,12 +1157,29 @@ def main() -> None:
             f"but only {len(candidates)} valid candidates were found."
         )
 
+    measured_interactions: Optional[Dict[frozenset, float]] = None
+    measured_pairwise_path: Optional[Path] = None
+    if args.measured_pairwise_csv:
+        candidate_path = Path(args.measured_pairwise_csv)
+        if candidate_path.exists():
+            measured_pairwise_path = candidate_path
+            measured_interactions = load_measured_pairwise_interactions(
+                candidate_path, loss_metric=args.loss_metric
+            )
+            print(f"Loaded {len(measured_interactions)} measured pairwise interactions "
+                  f"(loss_metric={args.loss_metric}) from: {candidate_path} "
+                  f"(blended into topology edge weights)")
+        else:
+            print(f"No measured pairwise data found at {candidate_path} -- "
+                  f"using the formula-only interaction weights.")
+
     interaction_edges = build_interaction_edges(
         candidates,
         method=args.interaction_method,
         target_compression=args.target_compression,
         target_tolerance=args.target_tolerance,
         budget_guard_weight=args.budget_guard_weight,
+        measured_interactions=measured_interactions,
     )
     beta_calibration: Optional[Dict[str, Any]] = None
     beta_used = args.beta
@@ -1107,6 +1239,9 @@ def main() -> None:
         "beta_calibration": beta_calibration,
         "rho_interaction": args.rho_interaction,
         "interaction_method": args.interaction_method,
+        "loss_metric": args.loss_metric,
+        "measured_pairwise_csv": str(measured_pairwise_path) if measured_pairwise_path else None,
+        "measured_pairwise_pairs_loaded": len(measured_interactions) if measured_interactions else 0,
         "target_tolerance": args.target_tolerance,
         "budget_guard_weight": args.budget_guard_weight,
         "upper_compression_band": args.target_compression + args.target_tolerance,

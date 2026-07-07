@@ -1,0 +1,62 @@
+{
+  "n_pairs": 45,
+  "max_samples": 600,
+  "baseline": {
+    "loss": 0.08863729625940323,
+    "accuracy": 0.9916666666666667,
+    "macro_f1": 0.9910687234689917,
+    "n_samples": 600
+  },
+  "baseline_eval_seconds": 30974.8837306,
+  "total_trainable_params": 27831663,
+  "mean_interaction_accuracy_gap": 0.008925925925925886,
+  "mean_interaction_loss_gap": 0.03688724778427014,
+  "max_interaction_accuracy_gap": 0.11333333333333329,
+  "min_interaction_accuracy_gap": -0.07000000000000006,
+  "pairs_where_proxy_underestimated_damage": 39,
+  "pairs_where_proxy_overestimated_damage": 5,
+  "correlation_proxy_q_ij_vs_measured_gap": 0.537981270504906,
+  "top_5_largest_measured_interaction_gaps": [
+    {
+      "candidate_i": "stages.3.blocks.2",
+      "candidate_j": "stages.3.blocks.0",
+      "interaction_accuracy_gap": 0.11333333333333329,
+      "measured_accuracy_drop": 0.18166666666666664,
+      "predicted_accuracy_drop": 0.06833333333333336,
+      "proxy_q_ij": 0.3176473814309491
+    },
+    {
+      "candidate_i": "stages.1.blocks.1",
+      "candidate_j": "stages.0.blocks.0",
+      "interaction_accuracy_gap": 0.03166666666666662,
+      "measured_accuracy_drop": 0.8516666666666667,
+      "predicted_accuracy_drop": 0.8200000000000001,
+      "proxy_q_ij": 0.014644557133909615
+    },
+    {
+      "candidate_i": "stages.2.blocks.5",
+      "candidate_j": "stages.3.blocks.0",
+      "interaction_accuracy_gap": 0.030000000000000027,
+      "measured_accuracy_drop": 0.08000000000000007,
+      "predicted_accuracy_drop": 0.050000000000000044,
+      "proxy_q_ij": 0.15824431559099825
+    },
+    {
+      "candidate_i": "stages.2.blocks.7",
+      "candidate_j": "stages.3.blocks.0",
+      "interaction_accuracy_gap": 0.025000000000000022,
+      "measured_accuracy_drop": 0.08000000000000007,
+      "predicted_accuracy_drop": 0.05500000000000005,
+      "proxy_q_ij": 0.15870531298857213
+    },
+    {
+      "candidate_i": "stages.2.blocks.3",
+      "candidate_j": "stages.3.blocks.0",
+      "interaction_accuracy_gap": 0.023333333333333317,
+      "measured_accuracy_drop": 0.07500000000000007,
+      "predicted_accuracy_drop": 0.05166666666666675,
+      "proxy_q_ij": 0.15837100905225165
+    }
+  ],
+  "note": "measured_* comes from actually bypassing both blocks together on the real model. predicted_* is the naive sum of each block's individually-measured (first-order) damage from cost_loss_table.csv -- the QUBO's implicit no-interaction assumption. interaction_*_gap = measured - predicted is the real, measured second-order effect. proxy_q_ij is the CURRENT formula qubo_hamiltonian.py uses for the pairwise penalty -- compare it against interaction_accuracy_gap to see how good the formula's guess actually is. This notebook only measures and reports; it does not modify qubo_hamiltonian.py."
+}

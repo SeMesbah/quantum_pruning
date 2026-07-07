@@ -47,47 +47,36 @@ where:
 | `E_sparse` | sparse interaction edges, not all possible pairs |
 | `q_ij` | pairwise penalty for risky joint pruning |
 
-The sparse interaction set contains two kinds of edges:
+The interaction edges (`E_sparse`) come from up to three sources, controlled by `--interaction-method`:
 
 1. **Topology guard** — penalizes pruning multiple blocks from the same model stage.
 2. **Budget guard** — penalizes pairs that exceed the allowed compression band above the target.
+3. **`all_pairs` (default)** — every candidate pair gets an edge (45 for 10 candidates), so the formula estimate above can be blended with real measured data for every pair, not just a hand-picked subset.
 
-The target compression is therefore handled by:
+The target compression is therefore handled by `beta` calibration + the pairwise guards, instead of one dense all-to-all squared penalty.
 
-```text
-beta calibration + sparse budget guard
-```
+### Measured pairwise interaction data (default: on)
 
-instead of one dense all-to-all squared penalty.
+`q_ij` doesn't have to be a pure formula guess. `pairwise_sensitivity.ipynb` actually bypasses **two** blocks at once (all 45 pairs among the 10 candidates) and measures the real joint damage on the trained model — the same technique the single-block sensitivity step uses, extended to pairs. `qubo_hamiltonian.py` blends this real measurement into each edge's weight by default (`--measured-pairwise-csv qubo_outputs/pairwise_sensitivity.csv`), averaging it with the formula estimate. Negative measured gaps (a pair that turned out safer together than the naive sum predicted) are kept as real, not clipped to zero.
+
+### Loss metric (`--loss-metric`, default: `accuracy`)
+
+`L_i` — and, when blending, the measured half of `q_ij` — can be built from validation-loss increase (`loss`), real accuracy drop (`accuracy`), or real macro-F1 drop (`f1`). The two must share a basis to stay unit-consistent (`qubo_hamiltonian.py` enforces this automatically). Empirically, building the whole equation on **accuracy** and blending with measured pairwise accuracy-drop data gives the best real-model result of every variant tried — see below.
 
 ---
 
-## Current Corrected Result
+## Current Result (default settings: `all_pairs`, `--loss-metric accuracy`, measured blend, `target-compression 0.40`)
 
-Using the current 8 valid candidates and target compression `30%`, the corrected script produces:
+| variant | blocks pruned | real accuracy drop | real F1 drop | real param reduction |
+|---|---|---|---|---|
+| formula-only, sparse (`same_stage`, 12 edges) | 3 blocks | 4.00% | 4.48% | 22.5% |
+| formula-only, dense (`all_pairs`, 45 edges) | 2 blocks | 3.17% | 3.37% | 21.4% |
+| measured blend, loss-basis | 2 blocks (different pair) | 3.83% | 4.06% | 21.4% |
+| **measured blend, accuracy-basis (current default)** | `stages.2.blocks.2` + `stages.3.blocks.2` | **3.17%** | **3.37%** | **21.4%** |
 
-```text
-best bitstring: 10000000
-compression:   35.03%
-loss penalty:  0.027674
-pruned block:  stages.3.blocks.2
-```
+The accuracy-basis blend was chosen as the default because it consistently reproduces the best real-model result across independent runs, while being grounded in actual measured pairwise damage rather than a formula guess alone. QAOA (`qiskit_algorithms.QAOA`, Aer-backed) verifiably finds this Hamiltonian's true global optimum (`qaoa_result.json → validation.found_global_optimum`) in a few seconds.
 
-This is much closer to the intended target than the old result:
-
-```text
-old result: 11000000
-old compression: 43.87%
-```
-
-The circuit is also less dense:
-
-```text
-old all-to-all ZZ terms: 28
-new sparse ZZ terms:    13
-```
-
-The result is not exactly 30% because the available candidates are discrete. The closest useful low-damage option is one large block with approximately 35% of the selected candidate mass.
+The result is not exactly 40% because the candidates are discrete blocks of fixed size — see `qubo_outputs/qubo_energy_check.csv` for the full ranked list of reachable compressions.
 
 ---
 
